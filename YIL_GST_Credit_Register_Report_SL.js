@@ -215,6 +215,7 @@
         jeSubListObj.addField({id: 'custpage_je_srno', label: 'Sr. No.', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_inv_no', label: 'Invoice No.', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_inv_dt', label: 'Date', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_cust_nm', label: 'Name of Customer', type: ui.FieldType.TEXT});
 
     }
 
