@@ -17,6 +17,7 @@
         var isExport        = '';
         var fileContext     = '';
         var expoParams      = {prd: "",sub: "", vid: "", cid: ""};
+        var journalId       = '';
 
         if(context.request.method == https.Method.GET) {
 
@@ -24,7 +25,7 @@
             subsidiaryId    = context.request.parameters['sid'];
             vendorId        = context.request.parameters['vid'];
             customerId      = context.request.parameters['cid'];
-            isExport        = context.request.parameters['iexp'];
+            isExport        = context.request.parameters['iexp']; 
             
             if(isExport != "T" && isExport != "S") {
                 
