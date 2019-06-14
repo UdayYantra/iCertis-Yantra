@@ -18,6 +18,7 @@
         var fileContext     = '';
         var expoParams      = {prd: "",sub: "", vid: "", cid: ""};
         var journalId       = '';
+        
 
         if(context.request.method == https.Method.GET) {
 
@@ -44,7 +45,8 @@
                     currentPeriodId = _addAccoutingPeriods(periodFilterFld, currentPeriodId);
                 var poSubListObj = form.addSublist({id: 'custpage_po_report_sublist', label: 'Purchase Report', type: ui.SublistType.LIST});
                 var soSubListObj = form.addSublist({id: 'custpage_so_report_sublist', label: 'Sales Report', type: ui.SublistType.LIST});
-                    _addSublistFields(poSubListObj, soSubListObj);
+                var jeSublistObj = form.addSublist({id: 'custpage_je_report_sublist', label: 'Journal Report', type: ui.SublistType.LIST});
+                    _addSublistFields(poSubListObj, soSubListObj, jeSublistObj);
                 form.addButton({id: 'custpage_export_po_excel', label: 'Export PO Report', functionName: "_redirectExportBtn("+JSON.stringify(expoParams)+")"});
                 form.addButton({id: 'custpage_export_so_excel', label: 'Export SO Report', functionName: "_redirectSoExportBtn("+JSON.stringify(expoParams)+")"});
                 form.addButton({id: 'custpage_reset', label: 'Reset', functionName: "_resetFormBtn()"});
@@ -142,7 +144,7 @@
 
     }
 
-    function _addSublistFields(poSubListObj, soSubListObj) {
+    function _addSublistFields(poSubListObj, soSubListObj, jeSublistObj) {
 
         poSubListObj.addField({id: 'custpage_srno', label: 'Sr. No.', type: ui.FieldType.INTEGER});
         poSubListObj.addField({id: 'custpage_bill_no', label: 'Invoice No./ Credit Note No.', type: ui.FieldType.TEXT});
@@ -156,7 +158,6 @@
         poSubListObj.addField({id: 'custpage_gross_amt', label: 'Total Bill Amount (Gross)', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_tax_amt', label: 'Taxable value', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_hsn_code', label: 'VENDOR HSN/SAC CODE', type: ui.FieldType.TEXT});
-        
         poSubListObj.addField({id: 'custpage_cgst_tpf', label: 'CGST-2.5%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_sgst_tpf', label: 'SGST-2.5%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_cgst_six', label: 'CGST-6%', type: ui.FieldType.CURRENCY});
@@ -169,7 +170,6 @@
         poSubListObj.addField({id: 'custpage_igst_twelve', label: 'IGST-12%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_igst_eighteen', label: 'IGST-18%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_igst_twentyeight', label: 'IGST-28%', type: ui.FieldType.CURRENCY});
-        
         poSubListObj.addField({id: 'custpage_airline_cgst_tpf', label: 'Airline CGST-2.5%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_airline_sgst_tpf', label: 'Airline SGST-2.5%', type: ui.FieldType.CURRENCY});
         poSubListObj.addField({id: 'custpage_airline_igst_five', label: 'Airline IGST-5%', type: ui.FieldType.CURRENCY});
@@ -210,6 +210,11 @@
         soSubListObj.addField({id: 'custpage_so_igst_twelve', label: 'IGST-12%', type: ui.FieldType.CURRENCY});
         soSubListObj.addField({id: 'custpage_so_igst_eighteen', label: 'IGST-18%', type: ui.FieldType.CURRENCY});
         soSubListObj.addField({id: 'custpage_so_igst_twenty_eight', label: 'IGST-28%', type: ui.FieldType.CURRENCY});
+
+        
+        jeSubListObj.addField({id: 'custpage_je_srno', label: 'Sr. No.', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_inv_no', label: 'Invoice No.', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_inv_dt', label: 'Date', type: ui.FieldType.TEXT});
 
     }
 
