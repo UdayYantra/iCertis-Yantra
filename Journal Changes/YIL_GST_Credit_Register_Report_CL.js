@@ -64,9 +64,10 @@ define([], function() {
         var basePath = window.location.href;
         basePath = basePath.substring(0, basePath.indexOf("&deploy=1")+9);
         basePath += "&iexp=J";
-        /*if(expoParam.prd) { basePath += "&pid=" + expoParam.prd; }
+        if(expoParam.prd) { basePath += "&pid=" + expoParam.prd; }
         if(expoParam.sub) { basePath += "&sid=" + expoParam.sub; }
-        if(expoParam.cid) { basePath += "&cid=" + expoParam.cid; }*/
+        if(expoParam.cid) { basePath += "&cid=" + expoParam.cid; }
+        if(expoParam.vid) { basePath += "&vid=" + expoParam.vid; }
 
         window.onbeforeunload = false;
         window.location.href = basePath;

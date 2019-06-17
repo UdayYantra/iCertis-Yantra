@@ -99,7 +99,7 @@
                 fileContext += _getSoExcelHeaders();
             }
             else if(isExport == "J") {
-                /*currentPeriodId = _addAccoutingPeriods('', currentPeriodId);
+                currentPeriodId = _addAccoutingPeriods('', currentPeriodId);
                 //Reference can be found here >>
                 //https://www.cnblogs.com/backuper/p/export_netsuite_data_to_excel_file.html
                 fileContext = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>';
@@ -116,7 +116,7 @@
 
                 fileContext += '<Worksheet ss:Name="Sheet1">';
                 fileContext += '<Table>';
-                fileContext += _getJeExcelHeaders();*/
+                fileContext += _getJeExcelHeaders();
             }
             
             var poFileBodyContents = _generateOrExportPurchaseReport(poSubListObj, currentPeriodId, subsidiaryId, vendorId, isExport, expoParams);
@@ -163,8 +163,8 @@
                 context.response.writeFile({file : fileObj});
             }
             else if(isExport == "J") {
-                /*if(soFileBodyContents) {
-                    fileContext += soFileBodyContents;
+                if(jeFileBodyContents) {
+                    fileContext += jeFileBodyContents;
                 }
                 fileContext += '</Table></Worksheet></Workbook>';
 
@@ -174,9 +174,9 @@
                     outputEncoding : encode.Encoding.BASE_64
                 });
                 
-                var fileObj = file.create({name : 'GST Register Report Sales.xls', fileType : file.Type.EXCEL, contents : strXmlEncoded});
+                var fileObj = file.create({name : 'GST Register Report Journal.xls', fileType : file.Type.EXCEL, contents : strXmlEncoded});
                 
-                context.response.writeFile({file : fileObj});*/
+                context.response.writeFile({file : fileObj});
             }
 
         }
@@ -651,16 +651,16 @@
                     igstTwentyEight     = invoiceSearchResultSet[i].getValue(searchRange.columns[27]);
 
 
-                    invoiceId = invoiceId.replace(/- None -/g, "");
-                    invoiceDate = invoiceDate.replace(/- None -/g, "");
-                    customerName = customerName.replace(/- None -/g, "");
-                    customerAddress = customerAddress.replace(/- None -/g, "");
-                    customerGstNumber = customerGstNumber.replace(/- None -/g, "");
-                    glAccountNm = glAccountNm.replace(/- None -/g, "");
-                    billGrossAmt = billGrossAmt.replace(/- None -/g, "");
-                    taxableAmount = taxableAmount.replace(/- None -/g, "");
-                    hsnScaCode = hsnScaCode.replace(/- None -/g, "");
-                    taxRate = taxRate.replace(/- None -/g, "");
+                    if(invoiceId == "- None -") { invoiceId = invoiceId.replace(/- None -/g, ""); }
+                    if(invoiceDate == "- None -") { invoiceDate = invoiceDate.replace(/- None -/g, ""); }
+                    if(customerName == "- None -") { customerName = customerName.replace(/- None -/g, ""); }
+                    if(customerAddress == "- None -") { customerAddress = customerAddress.replace(/- None -/g, ""); }
+                    if(customerGstNumber == "- None -") { customerGstNumber = customerGstNumber.replace(/- None -/g, ""); }
+                    if(glAccountNm == "- None -") { glAccountNm = glAccountNm.replace(/- None -/g, ""); }
+                    if(billGrossAmt == "- None -") { billGrossAmt = billGrossAmt.replace(/- None -/g, ""); }
+                    if(taxableAmount == "- None -") { taxableAmount = taxableAmount.replace(/- None -/g, ""); }
+                    if(hsnScaCode == "- None -") { hsnScaCode = hsnScaCode.replace(/- None -/g, ""); }
+                    if(taxRate == "- None -") { taxRate = taxRate.replace(/- None -/g, ""); }
                     
                     if(isExport != "S" && isExport != "T" && isExport != "J") {
                         
@@ -740,20 +740,24 @@
         var totalRange = journalSearch.runPaged().count;
         var srNoCount   = 1;
         var lineNo      = 0;
+        var entityArr   = [];
+        if(vendorId) { entityArr.push(vendorId); }
+        if(customerId) { entityArr.push(customerId); }
+
         //log.debug({title: "Search Length", details: totalRange});
         if(totalRange > 0) {
             var journalSearchFilter = journalSearch.filterExpression;
             if(currentPeriodId) {
-                //journalSearchFilter.push("AND"); 
-                //journalSearchFilter.push(['postingperiod', 'abs', currentPeriodId]);
+                journalSearchFilter.push("AND"); 
+                journalSearchFilter.push(['postingperiod', 'abs', currentPeriodId]);
             }
             if(subsidiaryId) {
-                //journalSearchFilter.push("AND");
-                //journalSearchFilter.push(['subsidiary', 'anyof', subsidiaryId]);
+                journalSearchFilter.push("AND");
+                journalSearchFilter.push(['subsidiary', 'anyof', subsidiaryId]);
             }
-            if(customerId || vendorId) {
-                //journalSearchFilter.push("AND");
-                //journalSearchFilter.push(['mainname', 'anyof', customerId]);
+            if(entityArr.length > 0) {
+                journalSearchFilter.push("AND");
+                journalSearchFilter.push(['name', 'anyof', entityArr]);
             }
             //log.debug({title: 'journalSearchFilter', details: journalSearchFilter});
             journalSearch.filterExpression = journalSearchFilter;
@@ -785,7 +789,7 @@
                     invoiceId           = journalSearchResultSet[i].getValue(searchRange.columns[1]);
                     invoiceDate         = journalSearchResultSet[i].getValue(searchRange.columns[2]);
                     invoiceActualDate   = journalSearchResultSet[i].getValue(searchRange.columns[3]);
-                    customerName        = journalSearchResultSet[i].getValue(searchRange.columns[4]);
+                    customerName        = journalSearchResultSet[i].getText(searchRange.columns[4]);
                     customerCategory    = journalSearchResultSet[i].getText(searchRange.columns[5]);
                     customerAddress     = journalSearchResultSet[i].getValue(searchRange.columns[6]);
                     customerGstNumber   = journalSearchResultSet[i].getValue(searchRange.columns[7]);
@@ -793,6 +797,7 @@
                     glAccountNm         = journalSearchResultSet[i].getText(searchRange.columns[11]);
                     taxableAmount       = journalSearchResultSet[i].getValue(searchRange.columns[10]);
 
+                    log.debug({title: 'customerName', details: customerName});
 
                     invoiceId = invoiceId.replace(/- None -/g, "");
                     invoiceDate = invoiceDate.replace(/- None -/g, "");
@@ -821,36 +826,23 @@
                         
                         lineNo++;
                     }
-                    /*else if(isExport == "J") {
+                    else if(isExport == "J") {
                         tempFileContent += '<Row>'
                         
                             tempFileContent += '<Cell><Data ss:Type="String">'+srNo+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+invoiceId+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+invoiceDate+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+invoiceActualDate+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerName+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerCategory+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerAddress+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerGstNumber+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerGstTaxNum+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+glAccountNm+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+billGrossAmt+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+taxableAmount+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+hsnScaCode+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+taxRate+'</Data></Cell>'
 
-                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstTPF+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstTPF+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstSix+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstSix+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstNine+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstNine+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstFourteen+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstFourteen+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+igstFive+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwelve+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+igstEighteen+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwentyEight+'</Data></Cell>'
-                            
                         tempFileContent += '</Row>';
-                    }*/
+                    }
                     
                 }
                 st = Number(ed);
@@ -983,6 +975,20 @@
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline CGST-2.5%</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline SGST-2.5%</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline IGST-5%</Data></Cell>';
+
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-5% RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-12% RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-18% RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-28% RCM Payable</Data></Cell>';
+
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-2.5%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-2.5%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-6%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-6%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-9%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-9%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-14%- RCM Payable</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-14%- RCM Payable</Data></Cell>';
 
         headerString += '</Row>';
 
