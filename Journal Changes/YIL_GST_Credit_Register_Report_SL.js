@@ -28,7 +28,7 @@
             customerId      = context.request.parameters['cid'];
             isExport        = context.request.parameters['iexp']; 
             
-            if(isExport != "T" && isExport != "S") {
+            if(isExport != "T" && isExport != "S" && isExport != "J") {
                 
                 if(currentPeriodId) { expoParams.prd = currentPeriodId; }
                 if(subsidiaryId) { expoParams.sub = subsidiaryId; }
@@ -45,10 +45,11 @@
                     currentPeriodId = _addAccoutingPeriods(periodFilterFld, currentPeriodId);
                 var poSubListObj = form.addSublist({id: 'custpage_po_report_sublist', label: 'Purchase Report', type: ui.SublistType.LIST});
                 var soSubListObj = form.addSublist({id: 'custpage_so_report_sublist', label: 'Sales Report', type: ui.SublistType.LIST});
-                var jeSublistObj = form.addSublist({id: 'custpage_je_report_sublist', label: 'Journal Report', type: ui.SublistType.LIST});
-                    _addSublistFields(poSubListObj, soSubListObj, jeSublistObj);
+                var jeSubListObj = form.addSublist({id: 'custpage_je_report_sublist', label: 'Journal Report', type: ui.SublistType.LIST});
+                    _addSublistFields(poSubListObj, soSubListObj, jeSubListObj);
                 form.addButton({id: 'custpage_export_po_excel', label: 'Export PO Report', functionName: "_redirectExportBtn("+JSON.stringify(expoParams)+")"});
                 form.addButton({id: 'custpage_export_so_excel', label: 'Export SO Report', functionName: "_redirectSoExportBtn("+JSON.stringify(expoParams)+")"});
+                form.addButton({id: 'custpage_export_je_excel', label: 'Export JE Report', functionName: "_redirectJeExportBtn("+JSON.stringify(expoParams)+")"});
                 form.addButton({id: 'custpage_reset', label: 'Reset', functionName: "_resetFormBtn()"});
                 
                 if(subsidiaryId) { subsidiaryFilterFld.defaultValue = subsidiaryId; }
@@ -97,12 +98,34 @@
                 fileContext += '<Table>';
                 fileContext += _getSoExcelHeaders();
             }
+            else if(isExport == "J") {
+                /*currentPeriodId = _addAccoutingPeriods('', currentPeriodId);
+                //Reference can be found here >>
+                //https://www.cnblogs.com/backuper/p/export_netsuite_data_to_excel_file.html
+                fileContext = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>';
+                fileContext += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
+                fileContext += 'xmlns:o="urn:schemas-microsoft-com:office:office" ';
+                fileContext += 'xmlns:x="urn:schemas-microsoft-com:office:excel" ';
+                fileContext += 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ';
+                fileContext += 'xmlns:html="http://www.w3.org/TR/REC-html40">';
+
+                fileContext += '<Styles>'
+                + '<Style ss:ID="s63">'
+                + '<Font x:CharSet="204" ss:Size="12" ss:Color="#000000" ss:Bold="1" ss:Underline="Single"/>'
+                + '</Style>' + '</Styles>';
+
+                fileContext += '<Worksheet ss:Name="Sheet1">';
+                fileContext += '<Table>';
+                fileContext += _getJeExcelHeaders();*/
+            }
             
             var poFileBodyContents = _generateOrExportPurchaseReport(poSubListObj, currentPeriodId, subsidiaryId, vendorId, isExport, expoParams);
             
             var soFileBodyContents = _generateORExportSalesReport(soSubListObj, currentPeriodId, subsidiaryId, customerId, isExport, expoParams);
 
-            if(isExport != "T" && isExport != "S" ) {
+            var jeFileBodyContents = _generateORExportJournalReport(jeSubListObj, currentPeriodId, subsidiaryId, vendorId, customerId, isExport, expoParams);
+
+            if(isExport != "T" && isExport != "S" && isExport != "J") {
                 context.response.writePage(form);
                 return true;
             }
@@ -139,12 +162,28 @@
                 
                 context.response.writeFile({file : fileObj});
             }
+            else if(isExport == "J") {
+                /*if(soFileBodyContents) {
+                    fileContext += soFileBodyContents;
+                }
+                fileContext += '</Table></Worksheet></Workbook>';
+
+                var strXmlEncoded = encode.convert({
+                    string : fileContext,
+                    inputEncoding : encode.Encoding.UTF_8,
+                    outputEncoding : encode.Encoding.BASE_64
+                });
+                
+                var fileObj = file.create({name : 'GST Register Report Sales.xls', fileType : file.Type.EXCEL, contents : strXmlEncoded});
+                
+                context.response.writeFile({file : fileObj});*/
+            }
 
         }
 
     }
 
-    function _addSublistFields(poSubListObj, soSubListObj, jeSublistObj) {
+    function _addSublistFields(poSubListObj, soSubListObj, jeSubListObj) {
 
         poSubListObj.addField({id: 'custpage_srno', label: 'Sr. No.', type: ui.FieldType.INTEGER});
         poSubListObj.addField({id: 'custpage_bill_no', label: 'Invoice No./ Credit Note No.', type: ui.FieldType.TEXT});
@@ -191,7 +230,7 @@
         soSubListObj.addField({id: 'custpage_so_inv_no', label: 'Invoice No.', type: ui.FieldType.TEXT});
         soSubListObj.addField({id: 'custpage_so_inv_dt', label: 'Date', type: ui.FieldType.TEXT});
         soSubListObj.addField({id: 'custpage_so_cust_nm', label: 'Name of Customer', type: ui.FieldType.TEXT});
-        soSubListObj.addField({id: 'custpage_so_cust_addr', label: 'Address of Customer', type: ui.FieldType.TEXT});
+        soSubListObj.addField({id: 'custpage_so_cust_addr', label: 'Address of Customer', type: ui.FieldType.TEXT});    
         soSubListObj.addField({id: 'custpage_so_gst_no', label: 'GST Number of Customer', type: ui.FieldType.TEXT});
         soSubListObj.addField({id: 'custpage_so_gl_acc', label: 'GL Account', type: ui.FieldType.TEXT});
         soSubListObj.addField({id: 'custpage_so_total_amt', label: 'Total Bill Amount (Gross)', type: ui.FieldType.TEXT});
@@ -211,11 +250,44 @@
         soSubListObj.addField({id: 'custpage_so_igst_eighteen', label: 'IGST-18%', type: ui.FieldType.CURRENCY});
         soSubListObj.addField({id: 'custpage_so_igst_twenty_eight', label: 'IGST-28%', type: ui.FieldType.CURRENCY});
 
-        
         jeSubListObj.addField({id: 'custpage_je_srno', label: 'Sr. No.', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_inv_no', label: 'Invoice No.', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_inv_dt', label: 'Date', type: ui.FieldType.TEXT});
-        jeSubListObj.addField({id: 'custpage_je_cust_nm', label: 'Name of Customer', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_inv_act_dt', label: 'Actual Invoice Date', type: ui.FieldType.TEXT});        
+        jeSubListObj.addField({id: 'custpage_je_cust_nm', label: 'Name', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_cust_cat', label: 'Category', type: ui.FieldType.TEXT});    
+        jeSubListObj.addField({id: 'custpage_je_cust_addr', label: 'Address', type: ui.FieldType.TEXT});    
+        jeSubListObj.addField({id: 'custpage_je_gst_no', label: 'GST Number', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_gst_tax_rt', label: 'GST Tax Rate', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_gl_acc', label: 'GL Account', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_amt', label: 'Amount', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_cgst_tpf', label: 'CGST-2.5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_tpf', label: 'SGST-2.5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_six', label: 'CGST-6%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_six', label: 'SGST-6%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_nine', label: 'CGST-9%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_nine', label: 'sgst-9%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_forteen', label: 'CGST-14%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_forteen', label: 'SGST-14%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_five', label: 'IGST-5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_twelve', label: 'IGST-12%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_eighteen', label: 'IGST-18%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_twenty_eight', label: 'IGST-28%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_airline_cgst_tpf', label: 'Airline CGST-2.5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_airline_sgst_tpf', label: 'Airline SGST-2.5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_airline_igst_five', label: 'Airline IGST-5%', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_rcm_five', label: 'IGST-5% RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_rcm_twelve', label: 'IGST-12% RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_rcm_eighteen', label: 'IGST-18% RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_igst_rcm_twentyeight', label: 'IGST-28% RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_rcm_tpf', label: 'CGST-2.5%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_rcm_tpf', label: 'SGST-2.5%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_rcm_six', label: 'CGST-6%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_rcm_six', label: 'SGST-6%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_rcm_nine', label: 'CGST-9%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_rcm_nine', label: 'SGST-9%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_cgst_rcm_forteen', label: 'CGST-14%- RCM Payable', type: ui.FieldType.CURRENCY});
+        jeSubListObj.addField({id: 'custpage_je_sgst_rcm_forteen', label: 'SGST-14%- RCM Payable', type: ui.FieldType.CURRENCY});
 
     }
 
@@ -403,7 +475,7 @@
 
                     cgstTPF = cgstTPF.replace(/- None -/g, "");
                     
-                    if(isExport != "T" && isExport != "S") {
+                    if(isExport != "T" && isExport != "S" && isExport != "J") {
                         if(srNo) { poSubListObj.setSublistValue({id: 'custpage_srno', value: srNo, line: lineNo}); }
                         if(billId) { poSubListObj.setSublistValue({id: 'custpage_bill_no', value: billId, line: lineNo}); }
                         if(billDate) { poSubListObj.setSublistValue({id: 'custpage_bill_dt', value: billDate, line: lineNo}); }
@@ -590,7 +662,7 @@
                     hsnScaCode = hsnScaCode.replace(/- None -/g, "");
                     taxRate = taxRate.replace(/- None -/g, "");
                     
-                    if(isExport != "S" && isExport != "T") {
+                    if(isExport != "S" && isExport != "T" && isExport != "J") {
                         
                         if(srNo) { soSubListObj.setSublistValue({id: 'custpage_so_srno', value: srNo, line: lineNo}); }
                         if(invoiceId) { soSubListObj.setSublistValue({id: 'custpage_so_inv_no', value: invoiceId, line: lineNo}); }
@@ -658,6 +730,134 @@
         //log.debug({title: 'tempFileContent', details: tempFileContent});
         return tempFileContent;
 
+
+    }
+
+    function _generateORExportJournalReport(jeSubListObj, currentPeriodId, subsidiaryId, vendorId, customerId, isExport, expoParams) {
+
+        var journalSearch = search.load({id: 'customsearch897'});
+        var tempFileContent = '';
+        var totalRange = journalSearch.runPaged().count;
+        var srNoCount   = 1;
+        var lineNo      = 0;
+        //log.debug({title: "Search Length", details: totalRange});
+        if(totalRange > 0) {
+            var journalSearchFilter = journalSearch.filterExpression;
+            if(currentPeriodId) {
+                //journalSearchFilter.push("AND"); 
+                //journalSearchFilter.push(['postingperiod', 'abs', currentPeriodId]);
+            }
+            if(subsidiaryId) {
+                //journalSearchFilter.push("AND");
+                //journalSearchFilter.push(['subsidiary', 'anyof', subsidiaryId]);
+            }
+            if(customerId || vendorId) {
+                //journalSearchFilter.push("AND");
+                //journalSearchFilter.push(['mainname', 'anyof', customerId]);
+            }
+            //log.debug({title: 'journalSearchFilter', details: journalSearchFilter});
+            journalSearch.filterExpression = journalSearchFilter;
+
+            var searchRange = journalSearch.run();
+            var ed = 0;
+            
+            var totalRange1 = journalSearch.runPaged().count;
+
+            for(var st=ed;st<totalRange1;st++) {
+                ed = st+999;
+                if(totalRange1 < ed) {
+                    ed = Number(totalRange1);
+                }
+                //log.debug({title: "St & Ed", details: st +" & "+ ed});
+                var journalSearchResultSet = '';
+                journalSearchResultSet = searchRange.getRange({start: Number(st), end: Number(ed)});
+                
+                //log.debug({title: 'journalSearchResultSet Length', details: journalSearchResultSet.length});
+
+                for(var i=0;i<journalSearchResultSet.length;i++) {
+                    var srNo = Number(srNoCount).toFixed(0);   srNoCount++;
+                    var invoiceId = '', invoiceDate = '', customerName = '', customerAddress = '', customerGstNumber = '', vendorAddress = '',
+                        glAccountNm = '', billGrossAmt = '', taxableAmount = '', hsnScaCode = '', taxRate = '',
+                        cgstTPF = '', sgstTPF = '', cgstSix = '', sgstSix = '', cgstNine = '', sgstNine = '',
+                        cgstFourteen = '', sgstFourteen = '', igstFive = '', igstTwelve = '', igstEighteen = '', igstTwentyEight = '',
+                        
+
+                    invoiceId           = journalSearchResultSet[i].getValue(searchRange.columns[1]);
+                    invoiceDate         = journalSearchResultSet[i].getValue(searchRange.columns[2]);
+                    invoiceActualDate   = journalSearchResultSet[i].getValue(searchRange.columns[3]);
+                    customerName        = journalSearchResultSet[i].getValue(searchRange.columns[4]);
+                    customerCategory    = journalSearchResultSet[i].getText(searchRange.columns[5]);
+                    customerAddress     = journalSearchResultSet[i].getValue(searchRange.columns[6]);
+                    customerGstNumber   = journalSearchResultSet[i].getValue(searchRange.columns[7]);
+                    customerGstTaxNum   = journalSearchResultSet[i].getValue(searchRange.columns[8]);
+                    glAccountNm         = journalSearchResultSet[i].getText(searchRange.columns[11]);
+                    taxableAmount       = journalSearchResultSet[i].getValue(searchRange.columns[10]);
+
+
+                    invoiceId = invoiceId.replace(/- None -/g, "");
+                    invoiceDate = invoiceDate.replace(/- None -/g, "");
+                    invoiceActualDate = invoiceActualDate.replace(/- None -/g, "");
+                    customerName = customerName.replace(/- None -/g, "");
+                    customerCategory = customerCategory.replace(/- None -/g, "");
+                    customerAddress = customerAddress.replace(/- None -/g, "");
+                    customerGstNumber = customerGstNumber.replace(/- None -/g, "");
+                    customerGstTaxNum = customerGstTaxNum.replace(/- None -/g, "");
+                    glAccountNm = glAccountNm.replace(/- None -/g, "");
+                    taxableAmount = taxableAmount.replace(/- None -/g, "");
+                    
+                    if(isExport != "S" && isExport != "T" && isExport != "J") {
+                        
+                        if(srNo) { jeSubListObj.setSublistValue({id: 'custpage_je_srno', value: srNo, line: lineNo}); }
+                        if(invoiceId) { jeSubListObj.setSublistValue({id: 'custpage_je_inv_no', value: invoiceId, line: lineNo}); }
+                        if(invoiceDate) { jeSubListObj.setSublistValue({id: 'custpage_je_inv_dt', value: invoiceDate, line: lineNo}); }
+                        if(invoiceActualDate) { jeSubListObj.setSublistValue({id: 'custpage_je_inv_act_dt', value: invoiceActualDate, line: lineNo}); }
+                        if(customerName) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_nm', value: customerName, line: lineNo}); }
+                        if(customerCategory) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_cat', value: customerCategory, line: lineNo}); }
+                        if(customerAddress) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_addr', value: customerAddress, line: lineNo}); }
+                        if(customerGstNumber) { jeSubListObj.setSublistValue({id: 'custpage_je_gst_no', value: customerGstNumber, line: lineNo}); }
+                        if(customerGstTaxNum) { jeSubListObj.setSublistValue({id: 'custpage_je_gst_tax_rt', value: customerGstTaxNum, line: lineNo}); }
+                        if(glAccountNm) { jeSubListObj.setSublistValue({id: 'custpage_je_gl_acc', value: glAccountNm, line: lineNo}); }
+                        if(taxableAmount) { jeSubListObj.setSublistValue({id: 'custpage_je_amt', value: taxableAmount, line: lineNo}); }
+                        
+                        lineNo++;
+                    }
+                    /*else if(isExport == "J") {
+                        tempFileContent += '<Row>'
+                        
+                            tempFileContent += '<Cell><Data ss:Type="String">'+srNo+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+invoiceId+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+invoiceDate+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerName+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerAddress+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerGstNumber+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+glAccountNm+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+billGrossAmt+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+taxableAmount+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+hsnScaCode+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+taxRate+'</Data></Cell>'
+
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstTPF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstTPF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstFourteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstFourteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstFive+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwelve+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstEighteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwentyEight+'</Data></Cell>'
+                            
+                        tempFileContent += '</Row>';
+                    }*/
+                    
+                }
+                st = Number(ed);
+            }
+        }
+        //log.debug({title: 'tempFileContent', details: tempFileContent});
+        return tempFileContent;
 
     }
 
@@ -747,6 +947,47 @@
         headerString += '</Row>';
 
         return headerString;
+    }
+
+    function _getJeExcelHeaders() {
+
+        var headerString = '';
+
+        headerString += '<Row>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Sr. No.</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Invoice No.</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Date</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Actual Invoice Date</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Name</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Category</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Address</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GST Number</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GST Tax Rate</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GL Account</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Amount</Data></Cell>';
+            
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-2.5%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-2.5%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-6%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-6%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-9%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-9%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-14%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-14%</Data></Cell>';
+
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-5%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-12%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-18%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">IGST-28%</Data></Cell>';
+
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline CGST-2.5%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline SGST-2.5%</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Airline IGST-5%</Data></Cell>';
+
+        headerString += '</Row>';
+
+        return headerString;
+
     }
 
     function _addAccoutingPeriods(periodFilter, currentPeriodId) {

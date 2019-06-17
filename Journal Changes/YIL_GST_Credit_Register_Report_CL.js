@@ -60,11 +60,24 @@ define([], function() {
         window.location.href = basePath;
     }
 
+    function _redirectJeExportBtn(expoParam) {
+        var basePath = window.location.href;
+        basePath = basePath.substring(0, basePath.indexOf("&deploy=1")+9);
+        basePath += "&iexp=J";
+        /*if(expoParam.prd) { basePath += "&pid=" + expoParam.prd; }
+        if(expoParam.sub) { basePath += "&sid=" + expoParam.sub; }
+        if(expoParam.cid) { basePath += "&cid=" + expoParam.cid; }*/
+
+        window.onbeforeunload = false;
+        window.location.href = basePath;
+    }
+
     return {
         fieldChanged: fieldChanged,
         _resetFormBtn: _resetFormBtn,
         _redirectExportBtn: _redirectExportBtn,
-        _redirectSoExportBtn: _redirectSoExportBtn
+        _redirectSoExportBtn: _redirectSoExportBtn,
+        _redirectJeExportBtn: _redirectJeExportBtn
     }
 
 });
