@@ -256,11 +256,12 @@
         jeSubListObj.addField({id: 'custpage_je_inv_act_dt', label: 'Actual Invoice Date', type: ui.FieldType.TEXT});        
         jeSubListObj.addField({id: 'custpage_je_cust_nm', label: 'Name', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_cust_cat', label: 'Category', type: ui.FieldType.TEXT});    
-        jeSubListObj.addField({id: 'custpage_je_cust_addr', label: 'Address', type: ui.FieldType.TEXT});    
-        jeSubListObj.addField({id: 'custpage_je_gst_no', label: 'GST Number', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_cust_addr', label: 'Address', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_gst_tax_rt', label: 'GST Tax Rate', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_gl_acc', label: 'GL Account', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_amt', label: 'Amount', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_tax_amt', label: 'Taxable Amount', type: ui.FieldType.TEXT});
+        jeSubListObj.addField({id: 'custpage_je_grs_amt', label: 'Gross Amount', type: ui.FieldType.TEXT});
         jeSubListObj.addField({id: 'custpage_je_cgst_tpf', label: 'CGST-2.5%', type: ui.FieldType.CURRENCY});
         jeSubListObj.addField({id: 'custpage_je_sgst_tpf', label: 'SGST-2.5%', type: ui.FieldType.CURRENCY});
         jeSubListObj.addField({id: 'custpage_je_cgst_six', label: 'CGST-6%', type: ui.FieldType.CURRENCY});
@@ -780,11 +781,14 @@
 
                 for(var i=0;i<journalSearchResultSet.length;i++) {
                     var srNo = Number(srNoCount).toFixed(0);   srNoCount++;
-                    var invoiceId = '', invoiceDate = '', customerName = '', customerAddress = '', customerGstNumber = '', vendorAddress = '',
-                        glAccountNm = '', billGrossAmt = '', taxableAmount = '', hsnScaCode = '', taxRate = '',
+                    var invoiceId = '', invoiceDate = '', customerName = '', customerAddress = '', customerGstTaxId = '', customerGstTaxNm = '', vendorAddress = '',
+                        glAccountId = '', glAccountNm = '', billGrossAmt = '', amount = '', taxableAmount = '', grossAmount = '', hsnScaCode = '', taxRate = '',
                         cgstTPF = '', sgstTPF = '', cgstSix = '', sgstSix = '', cgstNine = '', sgstNine = '',
-                        cgstFourteen = '', sgstFourteen = '', igstFive = '', igstTwelve = '', igstEighteen = '', igstTwentyEight = '',
-                        
+                        cgstFourteen = '', sgstFourteen = '', igstFive = '', igstTwelve = '', igstEighteen = '', igstTwentyEight = '';
+
+                    var airlineCGSTTpF = '', airlineSGSTTpF = '', airlineIGSTFive = '', igstRcmFive = '', igstRcmTwelve = '', igstRcmEighteen = '', igstRcmTwentyEight = '',
+                        cgstRcmTpf = '', sgstRcmTpf = '', cgstRcmSix = '', sgstRcmSix = '', cgstRcmNine = '', sgstRcmNine = '', 
+                        cgstRcmFourteen = '', sgstRcmFourteen = '', cgstNinePayable = '', sgstNinePayable = '';
 
                     invoiceId           = journalSearchResultSet[i].getValue(searchRange.columns[1]);
                     invoiceDate         = journalSearchResultSet[i].getValue(searchRange.columns[2]);
@@ -792,12 +796,108 @@
                     customerName        = journalSearchResultSet[i].getText(searchRange.columns[4]);
                     customerCategory    = journalSearchResultSet[i].getText(searchRange.columns[5]);
                     customerAddress     = journalSearchResultSet[i].getValue(searchRange.columns[6]);
-                    customerGstNumber   = journalSearchResultSet[i].getValue(searchRange.columns[7]);
-                    customerGstTaxNum   = journalSearchResultSet[i].getValue(searchRange.columns[8]);
-                    glAccountNm         = journalSearchResultSet[i].getText(searchRange.columns[11]);
-                    taxableAmount       = journalSearchResultSet[i].getValue(searchRange.columns[10]);
+                    customerGstTaxId    = journalSearchResultSet[i].getValue(searchRange.columns[7]);
+                    customerGstTaxNm    = journalSearchResultSet[i].getText(searchRange.columns[7]);
+                    glAccountId         = journalSearchResultSet[i].getValue(searchRange.columns[10]);
+                    glAccountNm         = journalSearchResultSet[i].getText(searchRange.columns[10]);
+                    amount              = journalSearchResultSet[i].getValue(searchRange.columns[9]);
+                    
+                    if(Number(amount) < 0) {
+                        amount = Number(amount) * -1;
+                        taxableAmount = Number(amount).toFixed(2);
+                    }
+                    else if(Number(amount) > 0) {
+                        grossAmount = Number(amount).toFixed(2);
+                    }
 
-                    log.debug({title: 'customerName', details: customerName});
+                    amount = Number(amount).toFixed(2);
+                    
+                    if((Number(glAccountId) == 735 || Number(glAccountId) == 734) && (Number(customerGstTaxId) == 283 || Number(customerGstTaxId) == 300)) {
+                        cgstTPF = amount;
+                    }
+                    if((Number(glAccountId) == 738 || Number(glAccountId) == 737) && (Number(customerGstTaxId) == 288 || Number(customerGstTaxId) == 300)) {
+                        sgstTPF = amount;
+                    }
+                    if((Number(glAccountId) == 735 || Number(glAccountId) == 734) && (Number(customerGstTaxId) == 284 || Number(customerGstTaxId) == 301)) {
+                        cgstSix = amount;
+                    }
+                    if((Number(glAccountId) == 738 || Number(glAccountId) == 737) && (Number(customerGstTaxId) == 289 || Number(customerGstTaxId) == 301)) {
+                        sgstSix = amount;
+                    }
+                    if((Number(glAccountId) == 735 || Number(glAccountId) == 734) && (Number(customerGstTaxId) == 285 || Number(customerGstTaxId) == 302)) {
+                        cgstNine = amount;
+                    }
+                    if((Number(glAccountId) == 738 || Number(glAccountId) == 737) && (Number(customerGstTaxId) == 290 || Number(customerGstTaxId) == 302)) {
+                        sgstNine = amount;
+                    }
+                    if((Number(glAccountId) == 735 || Number(glAccountId) == 734) && (Number(customerGstTaxId) == 286 || Number(customerGstTaxId) == 303)) {
+                        cgstFourteen = amount;
+                    }
+                    if((Number(glAccountId) == 738 || Number(glAccountId) == 737) && (Number(customerGstTaxId) == 291 || Number(customerGstTaxId) == 303)) {
+                        sgstFourteen = amount;
+                    }
+
+                    if((Number(glAccountId) == 732 || Number(glAccountId) == 731) && (Number(customerGstTaxId) == 278 || Number(customerGstTaxId) == 295)) {
+                        igstFive = amount;
+                    }
+                    if((Number(glAccountId) == 732 || Number(glAccountId) == 731) && (Number(customerGstTaxId) == 279 || Number(customerGstTaxId) == 296)) {
+                        igstTwelve = amount;
+                    }
+                    if((Number(glAccountId) == 732 || Number(glAccountId) == 731) && (Number(customerGstTaxId) == 280 || Number(customerGstTaxId) == 297)) {
+                        igstEighteen = amount;
+                    }
+                    if((Number(glAccountId) == 732 || Number(glAccountId) == 731) && (Number(customerGstTaxId) == 281 || Number(customerGstTaxId) == 298)) {
+                        igstTwentyEight = amount;
+                    }
+                    
+                    if(Number(glAccountId) == 760 && (Number(customerGstTaxId) == 648 || Number(customerGstTaxId) == 649)) {
+                        airlineCGSTTpF = amount;
+                    }
+                    if(Number(glAccountId) == 761 && (Number(customerGstTaxId) == 647 || Number(customerGstTaxId) == 649)) {
+                        airlineSGSTTpF = amount;
+                    }
+                    if(Number(glAccountId) == 762 && (Number(customerGstTaxId) == 650 || Number(customerGstTaxId) == 651)) {
+                        airlineIGSTFive = amount;
+                    }
+                    
+                    if(Number(glAccountId) == 733 && (Number(customerGstTaxId) == 278 || Number(customerGstTaxId) == 295)) {
+                        igstRcmFive = amount;
+                    }
+                    if(Number(glAccountId) == 733 && (Number(customerGstTaxId) == 279 || Number(customerGstTaxId) == 296)) {
+                        igstRcmTwelve = amount;
+                    }
+                    if(Number(glAccountId) == 733 && (Number(customerGstTaxId) == 280 || Number(customerGstTaxId) == 297)) {
+                        igstRcmEighteen = amount;
+                    }
+                    if(Number(glAccountId) == 733 && (Number(customerGstTaxId) == 281 || Number(customerGstTaxId) == 298)) {
+                        igstRcmTwentyEight = amount;
+                    }
+
+                    if(Number(glAccountId) == 736 && (Number(customerGstTaxId) == 283 || Number(customerGstTaxId) == 300)) {
+                        cgstRcmTpf = amount;
+                    }
+                    if(Number(glAccountId) == 739 && (Number(customerGstTaxId) == 288 || Number(customerGstTaxId) == 300)) {
+                        sgstRcmTpf = amount;
+                    }
+                    if(Number(glAccountId) == 736 && (Number(customerGstTaxId) == 284 || Number(customerGstTaxId) == 301)) {
+                        cgstRcmSix = amount;
+                    }
+                    if(Number(glAccountId) == 739 && (Number(customerGstTaxId) == 289 || Number(customerGstTaxId) == 301)) {
+                        sgstRcmSix = amount;
+                    }
+                    if(Number(glAccountId) == 736 && (Number(customerGstTaxId) == 285 || Number(customerGstTaxId) == 302)) {
+                        cgstRcmNine = amount;
+                    }
+                    if(Number(glAccountId) == 739 && (Number(customerGstTaxId) == 290 || Number(customerGstTaxId) == 302)) {
+                        sgstRcmNine = amount;
+                    }
+                    if(Number(glAccountId) == 736 && (Number(customerGstTaxId) == 286 || Number(customerGstTaxId) == 303)) {
+                        cgstRcmFourteen = amount;
+                    }
+                    if(Number(glAccountId) == 739 && (Number(customerGstTaxId) == 291 || Number(customerGstTaxId) == 303)) {
+                        sgstRcmFourteen = amount;
+                    }
+                    
 
                     invoiceId = invoiceId.replace(/- None -/g, "");
                     invoiceDate = invoiceDate.replace(/- None -/g, "");
@@ -805,10 +905,9 @@
                     customerName = customerName.replace(/- None -/g, "");
                     customerCategory = customerCategory.replace(/- None -/g, "");
                     customerAddress = customerAddress.replace(/- None -/g, "");
-                    customerGstNumber = customerGstNumber.replace(/- None -/g, "");
-                    customerGstTaxNum = customerGstTaxNum.replace(/- None -/g, "");
+                    customerGstTaxNm = customerGstTaxNm.replace(/- None -/g, "");
                     glAccountNm = glAccountNm.replace(/- None -/g, "");
-                    taxableAmount = taxableAmount.replace(/- None -/g, "");
+                    //amount = amount.replace(/- None -/g, "");
                     
                     if(isExport != "S" && isExport != "T" && isExport != "J") {
                         
@@ -819,11 +918,44 @@
                         if(customerName) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_nm', value: customerName, line: lineNo}); }
                         if(customerCategory) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_cat', value: customerCategory, line: lineNo}); }
                         if(customerAddress) { jeSubListObj.setSublistValue({id: 'custpage_je_cust_addr', value: customerAddress, line: lineNo}); }
-                        if(customerGstNumber) { jeSubListObj.setSublistValue({id: 'custpage_je_gst_no', value: customerGstNumber, line: lineNo}); }
-                        if(customerGstTaxNum) { jeSubListObj.setSublistValue({id: 'custpage_je_gst_tax_rt', value: customerGstTaxNum, line: lineNo}); }
+                        if(customerGstTaxNm) { jeSubListObj.setSublistValue({id: 'custpage_je_gst_tax_rt', value: customerGstTaxNm, line: lineNo}); }
                         if(glAccountNm) { jeSubListObj.setSublistValue({id: 'custpage_je_gl_acc', value: glAccountNm, line: lineNo}); }
-                        if(taxableAmount) { jeSubListObj.setSublistValue({id: 'custpage_je_amt', value: taxableAmount, line: lineNo}); }
+                        if(amount) { jeSubListObj.setSublistValue({id: 'custpage_je_amt', value: amount, line: lineNo}); }
+                        if(taxableAmount) { jeSubListObj.setSublistValue({id: 'custpage_je_tax_amt', value: taxableAmount, line: lineNo}); }
+                        if(grossAmount) { jeSubListObj.setSublistValue({id: 'custpage_je_grs_amt', value: grossAmount, line: lineNo}); }
                         
+                        if(cgstTPF) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_tpf', value: cgstTPF, line: lineNo}); }
+                        if(sgstTPF) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_tpf', value: sgstTPF, line: lineNo}); }
+                        if(cgstSix) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_six', value: cgstSix, line: lineNo}); }
+                        if(sgstSix) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_six', value: sgstSix, line: lineNo}); }
+                        if(cgstNine) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_nine', value: cgstNine, line: lineNo}); }
+                        if(sgstNine) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_nine', value: sgstNine, line: lineNo}); }
+                        if(cgstFourteen) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_forteen', value: cgstFourteen, line: lineNo}); }
+                        if(sgstFourteen) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_forteen', value: sgstFourteen, line: lineNo}); }
+                        
+                        if(igstFive) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_five', value: igstFive, line: lineNo}); }
+                        if(igstTwelve) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_twelve', value: igstTwelve, line: lineNo}); }
+                        if(igstEighteen) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_eighteen', value: igstEighteen, line: lineNo}); }
+                        if(igstTwentyEight) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_twenty_eight', value: igstTwentyEight, line: lineNo}); }
+                        
+                        if(airlineCGSTTpF) { jeSubListObj.setSublistValue({id: 'custpage_je_airline_cgst_tpf', value: airlineCGSTTpF, line: lineNo}); }
+                        if(airlineSGSTTpF) { jeSubListObj.setSublistValue({id: 'custpage_je_airline_sgst_tpf', value: airlineSGSTTpF, line: lineNo}); }
+                        if(airlineIGSTFive) { jeSubListObj.setSublistValue({id: 'custpage_je_airline_igst_five', value: airlineIGSTFive, line: lineNo}); }
+                        
+                        if(igstRcmFive) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_rcm_five', value: igstRcmFive, line: lineNo}); }
+                        if(igstRcmTwelve) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_rcm_twelve', value: igstRcmTwelve, line: lineNo}); }
+                        if(igstRcmEighteen) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_rcm_eighteen', value: igstRcmEighteen, line: lineNo}); }
+                        if(igstRcmTwentyEight) { jeSubListObj.setSublistValue({id: 'custpage_je_igst_rcm_twentyeight', value: igstRcmTwentyEight, line: lineNo}); }
+
+                        if(cgstRcmTpf) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_rcm_tpf', value: cgstRcmTpf, line: lineNo}); }
+                        if(sgstRcmTpf) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_rcm_tpf', value: sgstRcmTpf, line: lineNo}); }
+                        if(cgstRcmSix) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_rcm_six', value: cgstRcmSix, line: lineNo}); }
+                        if(sgstRcmSix) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_rcm_six', value: sgstRcmSix, line: lineNo}); }
+                        if(cgstRcmNine) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_rcm_nine', value: cgstRcmNine, line: lineNo}); }
+                        if(sgstRcmNine) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_rcm_nine', value: sgstRcmNine, line: lineNo}); }
+                        if(cgstRcmFourteen) { jeSubListObj.setSublistValue({id: 'custpage_je_cgst_rcm_forteen', value: cgstRcmFourteen, line: lineNo}); }
+                        if(sgstRcmFourteen) { jeSubListObj.setSublistValue({id: 'custpage_je_sgst_rcm_forteen', value: sgstRcmFourteen, line: lineNo}); }
+
                         lineNo++;
                     }
                     else if(isExport == "J") {
@@ -836,10 +968,43 @@
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerName+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerCategory+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+customerAddress+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+customerGstNumber+'</Data></Cell>'
-                            tempFileContent += '<Cell><Data ss:Type="String">'+customerGstTaxNum+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+customerGstTaxNm+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+glAccountNm+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+amount+'</Data></Cell>'
                             tempFileContent += '<Cell><Data ss:Type="String">'+taxableAmount+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+grossAmount+'</Data></Cell>'
+
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstTPF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstTPF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstFourteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstFourteen+'</Data></Cell>'
+                                                    
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstFive+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwelve+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstEighteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstTwentyEight+'</Data></Cell>'
+
+                            tempFileContent += '<Cell><Data ss:Type="String">'+airlineCGSTTpF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+airlineSGSTTpF+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+airlineIGSTFive+'</Data></Cell>'
+                            
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstRcmFive+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstRcmTwelve+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstRcmEighteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+igstRcmTwentyEight+'</Data></Cell>'
+
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstRcmTpf+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstRcmTpf+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstRcmSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstRcmSix+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstRcmNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstRcmNine+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+cgstRcmFourteen+'</Data></Cell>'
+                            tempFileContent += '<Cell><Data ss:Type="String">'+sgstRcmFourteen+'</Data></Cell>'
 
                         tempFileContent += '</Row>';
                     }
@@ -953,10 +1118,11 @@
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Name</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Category</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Address</Data></Cell>';
-            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GST Number</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GST Tax Rate</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">GL Account</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Amount</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Taxable Amount</Data></Cell>';
+            headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">Gross Amount</Data></Cell>';
             
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">CGST-2.5%</Data></Cell>';
             headerString += '<Cell ss:StyleID="s63"><Data ss:Type="String">SGST-2.5%</Data></Cell>';
